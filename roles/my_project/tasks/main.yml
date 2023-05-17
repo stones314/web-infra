@@ -13,59 +13,60 @@
     state: present
     force_apt_get: yes
 
-#- name: Install certbot-nginx
-#  apt:
-#    name: python3-certbot-nginx
-#    state: present
-#    force_apt_get: yes
-#
-#- name: Add certbot nginx config
-#  copy:
-#    src: options-ssl-nginx.conf
-#    dest: /etc/letsencrypt/options-ssl-nginx.conf
-#
-#- name: Delete default site
-#  file:
-#    path: "{{ item }}"
-#    state: absent
-#  loop:
-#    - /etc/nginx/sites-available/default
-#    - /etc/nginx/sites-enabled/default
-#    - /var/www/html
-#
-#- name: Create challenge directory
-#  file:
-#    path: /var/www/well-known
-#    state: directory
-#
-#- name: Add http.conf
-#  template:
-#    src: http.conf
-#    dest: "/etc/nginx/sites-available/http.conf"
-#      #validate: bash -c 'nginx -t -c /dev/stdin <<< "events {worker_connections 1;} http { include %s; }"'
-#  register: http_conf
-#
-#- name: Enable http.conf
-#  file:
-#    src: "/etc/nginx/sites-available/http.conf"
-#    dest: "/etc/nginx/sites-enabled/http.conf"
-#    state: link
-#
-#- name: Make sure nginx is running and enabled
-#  service:
-#    name: nginx
-#    state: reloaded
-#    enabled: yes
-#  when: http_conf.changed
-#
-#- name: Add cron job for renewing certificates
-#  cron:
-#    name: "certbot renew"
-#    minute: "0"
-#    hour: "0"
-#    weekday: "0"
-#    job: "certbot renew -q --webroot -w /var/www/well-known/ --deploy-hook \"service nginx restart\""
-#
+- name: Delete default site
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/nginx/sites-available/default
+    - /etc/nginx/sites-enabled/default
+    - /var/www/html
+
+- name: Create challenge directory
+  file:
+    path: /var/www/well-known
+    state: directory
+
+- name: Add http.conf
+  copy:
+    src: http.conf
+    dest: "/etc/nginx/sites-available/http.conf"
+  register: http_conf
+
+- name: Enable http.conf
+  file:
+    src: "/etc/nginx/sites-available/http.conf"
+    dest: "/etc/nginx/sites-enabled/http.conf"
+    state: link
+
+- name: Make sure nginx is running and enabled
+  service:
+    name: nginx
+    state: reloaded
+    enabled: yes
+  when: http_conf.changed
+
+- name: Add cron job for renewing certificates
+  cron:
+    name: "certbot renew"
+    minute: "0"
+    hour: "0"
+    weekday: "0"
+    job: "certbot renew -q --webroot -w /var/www/well-known/ --deploy-hook \"service nginx restart\""
+
+      #- name: Add test.conf
+      #  copy:
+      #    src: test.conf
+      #    dest: "/etc/nginx/sites-available/test.conf"
+      #
+      #- name: Enable http.conf
+      #  file:
+      #    src: "/etc/nginx/sites-available/test.conf"
+      #    dest: "/etc/nginx/sites-enabled/test.conf"
+      #    state: link
+      #  notify:
+      #    - reload nginx
+
 #- name: Create certificate
 #  command: certbot certonly --non-interactive --agree-tos --email cato.morholt@gmail.com --webroot -w /var/www/well-known/ -d "{{ site.fqdn }}"
 #  args:
