@@ -1,0 +1,8 @@
+#!/usr/bin/env ansible-playbook
+
+- name: 'Setup and configure nginx reverse proxy'
+  hosts: aws
+  become: true
+
+  roles:
+  - my_project

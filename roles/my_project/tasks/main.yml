@@ -1,0 +1,145 @@
+---
+# tasks for: proxy
+
+- name: Install nginx
+  apt:
+    name: nginx
+    state: present
+    force_apt_get: yes
+
+- name: Install certbot
+  apt:
+    name: certbot
+    state: present
+    force_apt_get: yes
+
+#- name: Install certbot-nginx
+#  apt:
+#    name: python3-certbot-nginx
+#    state: present
+#    force_apt_get: yes
+#
+#- name: Add certbot nginx config
+#  copy:
+#    src: options-ssl-nginx.conf
+#    dest: /etc/letsencrypt/options-ssl-nginx.conf
+#
+#- name: Delete default site
+#  file:
+#    path: "{{ item }}"
+#    state: absent
+#  loop:
+#    - /etc/nginx/sites-available/default
+#    - /etc/nginx/sites-enabled/default
+#    - /var/www/html
+#
+#- name: Create challenge directory
+#  file:
+#    path: /var/www/well-known
+#    state: directory
+#
+#- name: Add http.conf
+#  template:
+#    src: http.conf
+#    dest: "/etc/nginx/sites-available/http.conf"
+#      #validate: bash -c 'nginx -t -c /dev/stdin <<< "events {worker_connections 1;} http { include %s; }"'
+#  register: http_conf
+#
+#- name: Enable http.conf
+#  file:
+#    src: "/etc/nginx/sites-available/http.conf"
+#    dest: "/etc/nginx/sites-enabled/http.conf"
+#    state: link
+#
+#- name: Make sure nginx is running and enabled
+#  service:
+#    name: nginx
+#    state: reloaded
+#    enabled: yes
+#  when: http_conf.changed
+#
+#- name: Add cron job for renewing certificates
+#  cron:
+#    name: "certbot renew"
+#    minute: "0"
+#    hour: "0"
+#    weekday: "0"
+#    job: "certbot renew -q --webroot -w /var/www/well-known/ --deploy-hook \"service nginx restart\""
+#
+#- name: Create certificate
+#  command: certbot certonly --non-interactive --agree-tos --email cato.morholt@gmail.com --webroot -w /var/www/well-known/ -d "{{ site.fqdn }}"
+#  args:
+#    creates: "/etc/letsencrypt/live/{{ site.fqdn }}"
+#  loop: "{{ proxy_sites }}"
+#  loop_control:
+#    loop_var: site
+#    label: "{{ site.fqdn }}"
+#  
+#- name: Add site configuration
+#  template:
+#    src: "{{ site.template|default('generic.conf.j2') }}"
+#    dest: "/etc/nginx/sites-available/{{ site.fqdn }}"
+#    #validate: bash -c 'nginx -t -c /dev/stdin <<< "events {worker_connections 1;} http { include %s; }"'
+#  loop: "{{ proxy_sites }}"
+#  loop_control:
+#    loop_var: site
+#    label: "{{ site.fqdn }}"
+#  notify:
+#    - reload nginx
+#
+#- name: Enable site configuration
+#  file:
+#    src: "/etc/nginx/sites-available/{{ site.fqdn }}"
+#    dest: "/etc/nginx/sites-enabled/{{ site.fqdn }}"
+#    state: link
+#  loop: "{{ proxy_sites }}"
+#  loop_control:
+#    loop_var: site
+#    label: "{{ site.fqdn }}"
+#
+#- name: Add site to list of managed sites
+#  set_fact:
+#    proxy_managed_sites: "{{ proxy_managed_sites + [ site.fqdn ] }}"
+#  loop: "{{ proxy_sites }}"
+#  loop_control:
+#    loop_var: site
+#    label: "{{ site.fqdn }}"
+#
+#- shell: ls -1 /etc/nginx/sites-available
+#  register: sites_available
+#  changed_when: False
+#
+#- set_fact:
+#    managed_files: "{{ proxy_managed_sites + ['http.conf'] }}"
+#
+#- name: Delete non managed configuration files (sites-available)
+#  file:
+#    path: "/etc/nginx/sites-available/{{ item }}"
+#    state: absent
+#  loop: "{{ sites_available.stdout_lines }}"
+#  when: item not in managed_files
+#
+#- shell: ls -1 /etc/nginx/sites-enabled
+#  register: sites_enabled
+#  changed_when: False
+#
+#- name: Delete non managed configuration files (sites-enabled)
+#  file:
+#    path: "/etc/nginx/sites-enabled/{{ item }}"
+#    state: absent
+#  loop: "{{ sites_enabled.stdout_lines }}"
+#  when: item not in managed_files
+#
+#- file:
+#    path: /etc/letsencrypt/live/README
+#    state: absent
+#
+#- shell: ls -1 /etc/letsencrypt/live
+#  register: sites_live
+#  changed_when: False
+#
+#- name: Delete non managed certificates
+#  command: certbot delete --non-interactive --agree-tos --cert-name "{{ item }}"
+#  loop: "{{ sites_live.stdout_lines }}"
+#  when: item not in proxy_managed_sites
+#
